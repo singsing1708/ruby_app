@@ -15,6 +15,8 @@ class MemoryParser
     process_file
   end
 
+  private
+
   def process_file
     File.foreach(@filename) do |line|
       result = line.split(" ")
@@ -26,10 +28,13 @@ class MemoryParser
       process_page_journey(url, ip)
     end
 
+    clean_up_data
+  end
+
+  def clean_up_data
     @most_page_view = page_view.sort_by {|key, value| [-value[:count], key]}
     @uniq_most_page_view = page_view.sort_by{|key, value| [-value[:uniq_count], key]}
     @page_view.clear
-
   end
 
   def process_page_view(url, ip)
