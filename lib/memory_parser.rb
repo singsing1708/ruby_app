@@ -1,14 +1,16 @@
 class MemoryParser
 
-  attr_reader :filename, :most_page_view, :uniq_most_page_view, :page_journey
+  attr_reader :filename, :most_page_view, :uniq_most_page_view, :page_journey, :page_view
 
   def initialize(filename:)
     raise StandardError, "File does not exists" unless File.exist?(filename)
 
     @filename = filename
+    @page_journey = {}
+    @page_view = {}
+
     @most_page_view = {}
     @uniq_most_page_view = {}
-    @page_journey = {}
 
     process_file
   end
@@ -20,29 +22,25 @@ class MemoryParser
 
       url, ip = result
 
-      process_most_page_view(url)
-      process_uniq_most_page_view(url, ip)
+      process_page_view(url, ip)
       process_page_journey(url, ip)
     end
 
-    @most_page_view = most_page_view.sort_by {|key, value| [-value, key]}
-    @uniq_most_page_view = uniq_most_page_view.sort_by{|key, value| [-value[:count], key]}
+    @most_page_view = page_view.sort_by {|key, value| [-value[:count], key]}
+    @uniq_most_page_view = page_view.sort_by{|key, value| [-value[:uniq_count], key]}
+    @page_view.clear
+
   end
 
-  def process_most_page_view(url)
-    if most_page_view[url].nil?
-      most_page_view[url] = 1
+  def process_page_view(url, ip)
+    if page_view[url].nil?
+      page_view[url] = { :count => 1, :ips => [ip], :uniq_count => 1 }
+    elsif page_view[url][:ips].include?(ip)
+      page_view[url][:count] += 1
     else
-      most_page_view[url] += 1
-    end
-  end
-
-  def process_uniq_most_page_view(url, ip)
-    if uniq_most_page_view[url].nil?
-      uniq_most_page_view[url] = { :count => 1, :ips => [ip] }
-    elsif !uniq_most_page_view[url][:ips].include?(ip)
-      uniq_most_page_view[url][:count] += 1
-      uniq_most_page_view[url][:ips] << ip
+      page_view[url][:uniq_count] += 1
+      page_view[url][:count] += 1
+      page_view[url][:ips] << ip
     end
   end
 
